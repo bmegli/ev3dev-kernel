@@ -53,12 +53,12 @@ extern const char* dc_motor_polarity_values[];
  */
 struct dc_motor_ops {
 	unsigned (*get_supported_commands)(void* context);
-	int (*get_command)(void* context);
+	unsigned (*get_command)(void* context);
 	int (*set_command)(void* context, unsigned command);
 	unsigned (*get_polarity)(void *context);
 	int (*set_polarity)(void *context, unsigned polarity);
-	unsigned (*get_duty_cycle)(void *context);
-	int (*set_duty_cycle)(void *context, unsigned duty);
+	int (*get_duty_cycle)(void *context);
+	int (*set_duty_cycle)(void *context, int duty_cycle);
 	void *context;
 };
 

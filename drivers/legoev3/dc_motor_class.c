@@ -2,6 +2,7 @@
  * DC motor device class for LEGO MINDSTORMS EV3
  *
  * Copyright (C) 2014 David Lechner <david@lechnology.com>
+ * Copyright (C) 2014 Ralph Hempel <rhempel@hempeldesigngroup.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -101,7 +102,12 @@ enum hrtimer_restart dc_motor_class_ramp_timer_handler(struct hrtimer *timer)
 		ramp_ns = motor->ramp_down_ms * 10000;
 		motor->current_duty_cycle--;
 	}
+
+	if (0 == ramp_ns)
+		motor->current_duty_cycle = motor->target_duty_cycle;
+
 	hrtimer_forward_now(&motor->ramp_timer, ktime_set(0, ramp_ns));
+
 	err = motor->ops.set_polarity(motor->ops.context,
 			motor->polarity ^ (motor->current_duty_cycle < 0));
 	WARN_ONCE(err, "Failed to set polarity.");
@@ -146,7 +152,6 @@ static ssize_t ramp_up_ms_store(struct device *dev,
 	if (sscanf(buf, "%ud", &value) != 1 || value > 10000)
 		return -EINVAL;
 	motor->ramp_up_ms = value;
-	/* TODO: need to implement ramping */
 
 	return count;
 }
@@ -169,7 +174,6 @@ static ssize_t ramp_down_ms_store(struct device *dev,
 	if (sscanf(buf, "%ud", &value) != 1 || value > 10000)
 		return -EINVAL;
 	motor->ramp_down_ms = value;
-	/* TODO: need to implement ramping */
 
 	return count;
 }
@@ -223,6 +227,7 @@ static ssize_t duty_cycle_store(struct device *dev,
 	if (sscanf(buf, "%d", &value) != 1 || value < -100 || value > 100)
 		return -EINVAL;
 	motor->target_duty_cycle = value;
+
 	if (motor->ops.get_command(motor->ops.context) == DC_MOTOR_COMMAND_RUN)
 		hrtimer_start(&motor->ramp_timer, ktime_set(0, 0), HRTIMER_MODE_REL);
 
